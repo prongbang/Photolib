@@ -7,8 +7,8 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
-import android.support.v4.content.FileProvider
-import android.support.v7.app.AlertDialog
+import androidx.core.content.FileProvider
+import androidx.appcompat.app.AlertDialog
 import android.util.Log
 import java.io.File
 import java.io.FileInputStream
@@ -26,6 +26,7 @@ class PhotoKit(private var mActivity: Activity?, private var applicationId: Stri
         private var currentPhotoPath = ""
         private var directoryName = "images"
         private var imageUri: Uri? = null
+        private var resize: Int? = null
 
         private const val MEDIA_TYPE_IMAGE = 1
         private const val REQUEST_IMAGE_CAPTURE: Int = 1000
@@ -60,7 +61,8 @@ class PhotoKit(private var mActivity: Activity?, private var applicationId: Stri
                             val file = File(imageUri.path)
                             try {
                                 val ims = FileInputStream(file)
-                                BitmapUtil.getScaledDownBitmap(BitmapFactory.decodeStream(ims), 950, false)
+                                if (resize != null) BitmapUtil.getScaledDownBitmap(BitmapFactory.decodeStream(ims), 1024, false)
+                                else BitmapFactory.decodeStream(ims)
                             } catch (e: FileNotFoundException) {
                                 e.printStackTrace()
                                 return
@@ -96,6 +98,11 @@ class PhotoKit(private var mActivity: Activity?, private var applicationId: Stri
 
     fun setSelectFile(s: String): PhotoKit {
         selectFile = s
+        return this
+    }
+
+    fun setResize(size: Int) : PhotoKit {
+        resize = size
         return this
     }
 

@@ -11,22 +11,29 @@
         }
 	}
 ```
-- Add the dependency
+- Add the dependency for support library
 ```gradle
 dependencies {
     implementation 'com.github.prongbang:photolib:1.0.0'
 }
 ```
 
+- Add the dependency for androidX
+```gradle
+dependencies {
+    implementation 'com.github.prongbang:photolib:1.1.0'
+}
+```
+
 - Select Image from Gallery
 ```kotlin
 PhotoKit.create(this@MainActivity, BuildConfig.APPLICATION_ID)
-    .gallery()
     .addOnPhotoListener(object : PhotoKit.OnPhotoListener {
         override fun onResult(data: Uri?) {
             ivPreview.setImageURI(data)
         }
     })
+    .gallery()
 ```
 
 - Select Image by options
@@ -45,12 +52,12 @@ PhotoKit.create(this@MainActivity, BuildConfig.APPLICATION_ID)
 
 ```kotlin
 PhotoKit.create(this@MainActivity, BuildConfig.APPLICATION_ID)
-    .takePhoto()
     .addOnCameraListener(object : PhotoKit.OnCameraListener {
         override fun onResult(bitmap: Bitmap?) {
             ivPreview.setImageBitmap(bitmap)
         }
     })
+    .takePhoto()
 ```
 
 - On Activity Result
