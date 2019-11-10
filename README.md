@@ -45,6 +45,11 @@ PhotoKit.create(this@MainActivity, BuildConfig.APPLICATION_ID)
             ivPreview.setImageURI(data)
         }
     })
+    .addOnCameraListener(object : PhotoKit.OnCameraListener {
+        override fun onResult(bitmap: Bitmap?) {
+            ivPreview.setImageBitmap(bitmap)
+        }
+    })
     .selectImage()
 ```
 
