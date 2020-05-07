@@ -1,42 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".MainActivity">
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical"
+	tools:context=".MainActivity">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/ivPreview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/vBottom" />
+	<androidx.appcompat.widget.AppCompatImageView
+		android:id="@+id/ivPreview"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_above="@+id/vBottom" />
 
-    <LinearLayout
-        android:id="@+id/vBottom"
-        android:gravity="center_horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true">
+	<LinearLayout
+		android:id="@+id/vBottom"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+		android:gravity="center_horizontal"
+		android:padding="16dp">
 
-        <Button
-            android:id="@+id/btnGallery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Gallery" />
+		<Button
+			android:id="@+id/btnGallery"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Gallery" />
 
-        <Button
-            android:id="@+id/btnOption"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Option" />
+		<Button
+			android:id="@+id/btnOption"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Option" />
 
-        <Button
-            android:id="@+id/btnTakePhoto"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Take a Photo" />
-    </LinearLayout>
+		<Button
+			android:id="@+id/btnTakePhoto"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Take a Photo" />
+	</LinearLayout>
 
 </RelativeLayout>

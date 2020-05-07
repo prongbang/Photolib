@@ -21,47 +21,42 @@ dependencies {
 - Add the dependency for androidX
 ```gradle
 dependencies {
-    implementation 'com.github.prongbang:photolib:1.1.0'
+    implementation 'com.github.prongbang:photolib:1.2.0'
 }
 ```
 
 - Select Image from Gallery
 ```kotlin
-PhotoKit.create(this@MainActivity, BuildConfig.APPLICATION_ID)
-    .addOnPhotoListener(object : PhotoKit.OnPhotoListener {
-        override fun onResult(data: Uri?) {
-            ivPreview.setImageURI(data)
-        }
-    })
+PhotoKit.Builder(this, BuildConfig.APPLICATION_ID)
+    .addOnPhotoListener { uri ->
+        ivPreview.setImageURI(uri)
+    }
+    .build()
     .gallery()
 ```
 
 - Select Image by options
 
 ```kotlin
-PhotoKit.create(this@MainActivity, BuildConfig.APPLICATION_ID)
-    .addOnPhotoListener(object : PhotoKit.OnPhotoListener {
-        override fun onResult(data: Uri?) {
-            ivPreview.setImageURI(data)
-        }
-    })
-    .addOnCameraListener(object : PhotoKit.OnCameraListener {
-        override fun onResult(bitmap: Bitmap?) {
-            ivPreview.setImageBitmap(bitmap)
-        }
-    })
+PhotoKit.Builder(this, BuildConfig.APPLICATION_ID)
+    .addOnPhotoListener { uri ->
+        ivPreview.setImageURI(uri)
+    }
+    .addOnCameraListener { bitmap ->
+        ivPreview.setImageBitmap(bitmap)
+    }
+    .build()
     .selectImage()
 ```
 
 - Take a Photo
 
 ```kotlin
-PhotoKit.create(this@MainActivity, BuildConfig.APPLICATION_ID)
-    .addOnCameraListener(object : PhotoKit.OnCameraListener {
-        override fun onResult(bitmap: Bitmap?) {
-            ivPreview.setImageBitmap(bitmap)
-        }
-    })
+PhotoKit.Builder(this, BuildConfig.APPLICATION_ID)
+    .addOnCameraListener { bitmap ->
+        ivPreview.setImageBitmap(bitmap)
+    }
+    .build()
     .takePhoto()
 ```
 

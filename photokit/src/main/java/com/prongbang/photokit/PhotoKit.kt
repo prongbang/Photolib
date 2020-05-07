@@ -7,9 +7,9 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.core.content.FileProvider
-import androidx.appcompat.app.AlertDialog
 import android.util.Log
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -19,192 +19,204 @@ import java.util.*
 
 class PhotoKit(private var mActivity: Activity?, private var applicationId: String) {
 
-    companion object {
+	private var addPhoto: String = ""
+	private var takeAPhoto: String = ""
+	private var chooseFromLibrary: String = ""
+	private var selectFile: String = ""
 
-        private const val TAG = "PhotoKit"
+	companion object {
 
-        private var currentPhotoPath = ""
-        private var directoryName = "images"
-        private var imageUri: Uri? = null
-        private var resize: Int? = null
+		private const val TAG = "PhotoKit"
 
-        private const val MEDIA_TYPE_IMAGE = 1
-        private const val REQUEST_IMAGE_CAPTURE: Int = 1000
-        private const val REQUEST_IMAGE_PICK: Int = 2000
+		private var currentPhotoPath = ""
+		private var directoryName = "images"
+		private var imageUri: Uri? = null
+		private var resize: Int? = null
 
-        private var mOnCameraListener: OnCameraListener? = null
-        private var mOnPhotoListener: OnPhotoListener? = null
+		private var mOnCameraListener: ((Bitmap) -> Unit)? = null
+		private var mOnPhotoListener: ((Uri?) -> Unit)? = null
 
-        private var addPhoto: String = "Add Photo"
-        private var takeAPhoto: String = "Take a Photo"
-        private var chooseFromLibrary: String = "Choose from Library"
-        private var selectFile: String = "Select File"
+		private const val MEDIA_TYPE_IMAGE = 1
+		private const val REQUEST_IMAGE_CAPTURE: Int = 1000
+		private const val REQUEST_IMAGE_PICK: Int = 2000
 
-        fun create(activity: Activity, applicationId: String): PhotoKit {
-            return PhotoKit(activity, applicationId)
-        }
+		fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+			if (resultCode == Activity.RESULT_OK) {
+				when (requestCode) {
+					REQUEST_IMAGE_CAPTURE -> {
 
-        fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-            if (resultCode == Activity.RESULT_OK) {
-                when (requestCode) {
-                    REQUEST_IMAGE_CAPTURE -> {
+						// bimatp factory
+						val options = BitmapFactory.Options()
 
-                        // bimatp factory
-                        val options = BitmapFactory.Options()
+						// Downsizing image as it throws OutOfMemory Exception for larger images
+						options.inSampleSize = 9
 
-                        // downsizing image as it throws OutOfMemory Exception for larger
-                        // images
-                        options.inSampleSize = 9
+						val bitmap = if (SDKUtil.isNougatAndHigher()) {
+							val imageUri = Uri.parse(currentPhotoPath)
+							val file = File(imageUri.path)
+							try {
+								val ims = FileInputStream(file)
+								if (resize != null) {
+									BitmapUtil.getScaledDownBitmap(BitmapFactory.decodeStream(ims),
+											1024, false)
+								} else {
+									BitmapFactory.decodeStream(ims)
+								}
+							} catch (e: FileNotFoundException) {
+								e.printStackTrace()
+								return
+							}
+						} else {
+							BitmapFactory.decodeFile(imageUri?.path, options)
+						}
 
-                        val bitmap = if (SDKUtil.isNougatAndHigher()) {
-                            val imageUri = Uri.parse(currentPhotoPath)
-                            val file = File(imageUri.path)
-                            try {
-                                val ims = FileInputStream(file)
-                                if (resize != null) BitmapUtil.getScaledDownBitmap(BitmapFactory.decodeStream(ims), 1024, false)
-                                else BitmapFactory.decodeStream(ims)
-                            } catch (e: FileNotFoundException) {
-                                e.printStackTrace()
-                                return
-                            }
-                        } else {
-                            BitmapFactory.decodeFile(imageUri?.path, options)
-                        }
+						mOnCameraListener?.invoke(bitmap)
+					}
+					REQUEST_IMAGE_PICK -> {
+						mOnPhotoListener?.invoke(data?.data)
+					}
+				}
+			}
+		}
+	}
 
-                        mOnCameraListener?.onResult(bitmap)
-                    }
-                    REQUEST_IMAGE_PICK -> {
-                        mOnPhotoListener?.onResult(data?.data)
-                    }
-                }
-            }
-        }
-    }
+	class Builder(private val activity: Activity, private val applicationId: String) {
 
-    fun setTitle(title: String): PhotoKit {
-        addPhoto = title
-        return this
-    }
+		private var addPhotoText: String = "Add Photo"
+		private var takeAPhotoText: String = "Take a Photo"
+		private var chooseFromLibraryText: String = "Choose from Library"
+		private var selectFileText: String = "Select File"
+		private var resizeInt: Int? = null
 
-    fun setTakePhoto(takePhoto: String): PhotoKit {
-        takeAPhoto = takePhoto
-        return this
-    }
+		private var onCameraListener: ((Bitmap) -> Unit)? = null
+		private var onPhotoListener: ((Uri?) -> Unit)? = null
 
-    fun setChooseFromLibrary(s: String): PhotoKit {
-        chooseFromLibrary = s
-        return this
-    }
+		fun setTitle(title: String): Builder {
+			addPhotoText = title
+			return this
+		}
 
-    fun setSelectFile(s: String): PhotoKit {
-        selectFile = s
-        return this
-    }
+		fun setTakePhoto(takePhoto: String): Builder {
+			takeAPhotoText = takePhoto
+			return this
+		}
 
-    fun setResize(size: Int) : PhotoKit {
-        resize = size
-        return this
-    }
+		fun setChooseFromLibrary(s: String): Builder {
+			chooseFromLibraryText = s
+			return this
+		}
 
-    fun selectImage() {
+		fun setSelectFile(s: String): Builder {
+			selectFileText = s
+			return this
+		}
 
-        if (mActivity == null) return
+		fun setResize(size: Int): Builder {
+			resizeInt = size
+			return this
+		}
 
-        val items = arrayOf<CharSequence>(takeAPhoto, chooseFromLibrary)
+		fun addOnCameraListener(listener: ((Bitmap) -> Unit)?): Builder {
+			onCameraListener = listener
+			return this
+		}
 
-        val builder = AlertDialog.Builder(mActivity!!)
-        builder.setTitle(addPhoto)
-        builder.setItems(items) { _, item ->
-            when (item) {
-                0 -> takePhoto()
-                else -> gallery()
-            }
-        }
-        builder.show()
-    }
+		fun addOnPhotoListener(listener: ((Uri?) -> Unit)?): Builder {
+			onPhotoListener = listener
+			return this
+		}
 
-    fun takePhoto(): PhotoKit {
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        imageUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE)
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
+		fun build(): PhotoKit {
+			return PhotoKit(activity, applicationId).apply {
+				addPhoto = addPhotoText
+				takeAPhoto = takeAPhotoText
+				chooseFromLibrary = chooseFromLibraryText
+				selectFile = selectFileText
+				resize = resizeInt
+				mOnCameraListener = onCameraListener
+				mOnPhotoListener = onPhotoListener
+			}
+		}
+	}
 
-        // start the image capture Intent
-        mActivity?.startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
-        return this
-    }
+	fun selectImage() {
+		if (mActivity == null) return
 
-    fun gallery(): PhotoKit {
-        val intent = Intent(Intent.ACTION_GET_CONTENT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        intent.type = "image/*"
-        mActivity?.startActivityForResult(Intent.createChooser(intent, selectFile), REQUEST_IMAGE_PICK)
-        return this
-    }
+		val items = arrayOf<CharSequence>(takeAPhoto, chooseFromLibrary)
+		val builder = AlertDialog.Builder(mActivity!!)
+		builder.setTitle(addPhoto)
+		builder.setItems(items) { _, item ->
+			when (item) {
+				0 -> takePhoto()
+				else -> gallery()
+			}
+		}
+		builder.show()
+	}
 
-    fun addOnCameraListener(onCameraListener: OnCameraListener): PhotoKit {
-        mOnCameraListener = onCameraListener
-        return this
-    }
+	fun takePhoto(): PhotoKit {
+		val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+		imageUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE)
+		intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
 
-    fun addOnPhotoListener(onPhotoListener: OnPhotoListener): PhotoKit {
-        mOnPhotoListener = onPhotoListener
-        return this
-    }
+		// start the image capture Intent
+		mActivity?.startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
+		return this
+	}
 
-    private fun getOutputMediaFileUri(type: Int): Uri? {
-        return if (SDKUtil.isNougatAndHigher()) {
-            if (mActivity == null) return null
+	fun gallery(): PhotoKit {
+		val intent = Intent(Intent.ACTION_GET_CONTENT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+		intent.type = "image/*"
+		mActivity?.startActivityForResult(Intent.createChooser(intent, selectFile),
+				REQUEST_IMAGE_PICK)
+		return this
+	}
 
-            FileProvider.getUriForFile(
-                    mActivity!!.applicationContext,
-                    "$applicationId.fileprovider",
-                    getOutputMediaFile(type)
-            )
-        } else Uri.fromFile(getOutputMediaFile(type))
-    }
+	private fun getOutputMediaFileUri(type: Int): Uri? {
+		return if (SDKUtil.isNougatAndHigher()) {
+			if (mActivity == null) return null
 
-    private fun getOutputMediaFile(type: Int): File {
+			FileProvider.getUriForFile(mActivity!!.applicationContext,
+					"$applicationId.fileprovider", getOutputMediaFile(type))
+		} else Uri.fromFile(getOutputMediaFile(type))
+	}
 
-        // External sdcard location
-        val mediaStorageDir = File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                directoryName
-        )
+	private fun getOutputMediaFile(type: Int): File {
 
-        // Create the storage directory if it does not exist
-        if (!mediaStorageDir.exists()) {
-            if (!mediaStorageDir.mkdirs()) {
-                Log.e(TAG, "Oops! Failed create $directoryName directory")
-                return File(directoryName)
-            }
-        }
+		// External sdcard location
+		val mediaStorageDir = File(
+				Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+				directoryName
+		)
 
-        // Create a media file name
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        var mediaFile: File
-        val imageFileName = "IMG_$timeStamp.jpg"
-        if (type == MEDIA_TYPE_IMAGE) {
+		// Create the storage directory if it does not exist
+		if (!mediaStorageDir.exists()) {
+			if (!mediaStorageDir.mkdirs()) {
+				Log.e(TAG, "Oops! Failed create $directoryName directory")
+				return File(directoryName)
+			}
+		}
 
-            mediaFile = File(mediaStorageDir.path + File.separator + imageFileName)
-            if (SDKUtil.isNougatAndHigher()) {
-                try {
-                    mediaFile = File.createTempFile(imageFileName, ".jpg", File(mediaStorageDir.path))
-                    currentPhotoPath = mediaFile.absolutePath
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-            }
-        } else {
-            return File(directoryName)
-        }
+		// Create a media file name
+		val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+		var mediaFile: File
+		val imageFileName = "IMG_$timeStamp.jpg"
+		if (type == MEDIA_TYPE_IMAGE) {
 
-        return mediaFile
-    }
+			mediaFile = File(mediaStorageDir.path + File.separator + imageFileName)
+			if (SDKUtil.isNougatAndHigher()) {
+				try {
+					mediaFile = File.createTempFile(imageFileName, ".jpg",
+							File(mediaStorageDir.path))
+					currentPhotoPath = mediaFile.absolutePath
+				} catch (e: IOException) {
+					e.printStackTrace()
+				}
+			}
+		} else {
+			return File(directoryName)
+		}
 
-    interface OnCameraListener {
-        fun onResult(bitmap: Bitmap?)
-    }
-
-    interface OnPhotoListener {
-        fun onResult(data: Uri?)
-    }
+		return mediaFile
+	}
 }
